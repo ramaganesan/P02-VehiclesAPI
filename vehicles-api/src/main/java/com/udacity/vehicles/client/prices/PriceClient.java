@@ -2,8 +2,12 @@ package com.udacity.vehicles.client.prices;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
+
+import javax.xml.ws.http.HTTPException;
 
 /**
  * Implements a class to interface with the Pricing Client for price data.
@@ -39,7 +43,8 @@ public class PriceClient {
                             .queryParam("vehicleId", vehicleId)
                             .build()
                     )
-                    .retrieve().bodyToMono(Price.class).block();
+                    .retrieve().bodyToMono(Price.class)
+                    .block();
 
             return String.format("%s %s", price.getCurrency(), price.getPrice());
 

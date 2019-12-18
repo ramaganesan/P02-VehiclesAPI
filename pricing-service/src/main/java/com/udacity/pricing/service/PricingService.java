@@ -61,4 +61,10 @@ public class PricingService {
         PriceEntity entity =priceEntity.orElseThrow(PriceNotFoundException::new);
         repository.deleteByVehicleId(entity.getVehicleId());
     }
+
+    public void deletePriceById(Long id){
+        Optional<PriceEntity> optionalPriceEntity = repository.findById(id);
+        PriceEntity entity = optionalPriceEntity.orElseThrow(PriceNotFoundException::new);
+        repository.delete(entity);
+    }
 }

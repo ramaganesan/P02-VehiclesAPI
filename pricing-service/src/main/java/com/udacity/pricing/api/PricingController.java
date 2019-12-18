@@ -2,12 +2,12 @@ package com.udacity.pricing.api;
 
 import com.udacity.pricing.domain.price.Price;
 import com.udacity.pricing.service.PriceException;
+import com.udacity.pricing.service.PriceNotFoundException;
 import com.udacity.pricing.service.PricingMockService;
+import com.udacity.pricing.service.PricingService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
@@ -17,19 +17,78 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/services/price")
 public class PricingController {
 
+    @Autowired
+    private PricingService pricingService;
+
     /**
      * Gets the price for a requested vehicle.
      * @param vehicleId ID number of the vehicle for which the price is requested
      * @return price of the vehicle, or error that it was not found.
      */
-    @GetMapping
-    public Price get(@RequestParam Long vehicleId) {
+    @GetMapping("/vehicle")
+    public Price getByVehicleId(@RequestParam Long vehicleId) {
         try {
-            return PricingMockService.getPrice(vehicleId);
-        } catch (PriceException ex) {
+            return pricingService.findPriceByVehicleId(vehicleId);
+        } catch (PriceNotFoundException ex) {
             throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "Price Not Found", ex);
+                    HttpStatus.NOT_FOUND, "Price Not Found for vehicleId: " + vehicleId, ex);
+        } catch (Exception ex){
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error in finding Price for vehicleId: " + vehicleId, ex);
         }
 
+    }
+
+    @GetMapping("/{id}")
+    public Price getPriceById(@PathVariable Long id) {
+        try {
+            return pricingService.findPriceById(id);
+        } catch (PriceNotFoundException ex) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Price Not Found for ID: " + id, ex);
+        } catch (Exception ex){
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error in finding Price for Id: " + id, ex);
+        }
+
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public void createPrice(@RequestBody Price price){
+        try {
+            pricingService.createPrice(price);
+        } catch (Exception ex){
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error in Creating Price for vehicleId: " + price.getVehicleId(), ex);
+        }
+    }
+
+    @PutMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updatePrice(@RequestBody Price price, @PathVariable Long id){
+        try{
+            pricingService.updatePriceByVehicleId(price);
+        }catch (PriceNotFoundException ex) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Unable to update Price as Price is Not Found for id: " + id, ex);
+        } catch (Exception ex){
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error in updating price for vehicleId: " + price.getVehicleId(), ex);
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletePrice(@PathVariable Long id){
+        try{
+            pricingService.deletePriceById(id);
+        }catch (PriceNotFoundException ex){
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Unable to delete price for id: " + id, ex);
+        }catch (Exception ex){
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error in deleting Price: " + id, ex);
+        }
     }
 }
