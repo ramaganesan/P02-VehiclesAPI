@@ -111,7 +111,15 @@ public class PriceClient implements ApplicationListener<VehicleEvent> {
             log.info("Successfully updated Pricing service " + returnPrice.getVehicleId());
         }else{
             log.info("Cars delete event published. Deleting Price");
-
+            client.delete()
+                    .uri(uriBuilder -> uriBuilder.path("services/price/vehicle/")
+                            .queryParam("vehicleId", vehicleEvent.getCar().getId())
+                         .build())
+                    .retrieve()
+                    .toBodilessEntity()
+                    .retryWhen(retryPrice)
+                    .block();
+            log.info("Successfully deleted Price");
         }
     }
 }
