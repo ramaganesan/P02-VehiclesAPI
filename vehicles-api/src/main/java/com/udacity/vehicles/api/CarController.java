@@ -67,7 +67,7 @@ class CarController {
      * @return response that the new vehicle was added to the system
      * @throws URISyntaxException if the request contains invalid fields or syntax
      */
-    @PostMapping(consumes = MediaType.ALL_VALUE)
+    @PostMapping()
     ResponseEntity<?> post(@Valid @RequestBody Car car) throws URISyntaxException {
         /**
          * TODO: Use the `save` method from the Car Service to save the input car.

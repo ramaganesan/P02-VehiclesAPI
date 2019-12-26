@@ -4,6 +4,7 @@ import com.udacity.vehicles.event.CarEventsEnum;
 import com.udacity.vehicles.event.VehicleEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationListener;
 import org.springframework.http.HttpStatus;
@@ -109,6 +110,7 @@ public class PriceClient implements ApplicationListener<VehicleEvent> {
                           .retryWhen(retryPrice)
                           .block();
             log.info("Successfully updated Pricing service " + returnPrice.getVehicleId());
+
         }else{
             log.info("Cars delete event published. Deleting Price");
             client.delete()
@@ -121,5 +123,11 @@ public class PriceClient implements ApplicationListener<VehicleEvent> {
                     .block();
             log.info("Successfully deleted Price");
         }
+        pricingCacheClear(vehicleEvent.getCar().getId());
+    }
+
+    @CacheEvict(cacheNames = "pricing-service-cache", key = "#vehicleId")
+    public void pricingCacheClear(Long vehicleId){
+        log.info("Cleared  Price cache");
     }
 }
