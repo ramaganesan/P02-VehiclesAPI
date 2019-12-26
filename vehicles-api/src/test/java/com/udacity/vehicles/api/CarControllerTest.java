@@ -8,9 +8,7 @@ import com.udacity.vehicles.domain.car.Details;
 import com.udacity.vehicles.domain.manufacturer.Manufacturer;
 import com.udacity.vehicles.domain.manufacturer.ManufacturerRepository;
 import com.udacity.vehicles.service.CarService;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +24,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -38,8 +37,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -53,6 +51,7 @@ import static org.hamcrest.Matchers.*;
 @AutoConfigureMockMvc
 @AutoConfigureJsonTesters
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class CarControllerTest {
 
     @Autowired
@@ -106,6 +105,7 @@ public class CarControllerTest {
      * @throws Exception when car creation fails in the system
      */
     @Test
+    @Order(1)
     public void createCar() throws Exception {
         Car car = getCar();
         Mockito.when(carService.save(car)).thenReturn(car);
@@ -123,6 +123,7 @@ public class CarControllerTest {
      * @throws Exception if the read operation of the vehicle list fails
      */
     @Test
+    @Order(2)
     public void listCars() throws Exception {
         /**
          * TODO: Add a test to check that the `get` method works by calling
@@ -144,25 +145,36 @@ public class CarControllerTest {
      * Tests the read operation for a single car by ID.
      * @throws Exception if the read operation for a single car fails
      */
-   // @Test
+   @Test
+   @Order(3)
     public void findCar() throws Exception {
         /**
          * TODO: Add a test to check that the `get` method works by calling
          *   a vehicle by ID. This should utilize the car from `getCar()` below.
          */
+        Car car = getCar();
+        Mockito.when(carService.findById(car.getId())).thenReturn(car);
+        mvc.perform(get("/cars/"+car.getId()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/hal+json"))
+                .andExpect(jsonPath("$.id",is(1)));
     }
 
     /**
      * Tests the deletion of a single car by ID.
      * @throws Exception if the delete operation of a vehicle fails
      */
-    //@Test
+    @Test
+    @Order(4)
     public void deleteCar() throws Exception {
         /**
          * TODO: Add a test to check whether a vehicle is appropriately deleted
          *   when the `delete` method is called from the Car Controller. This
          *   should utilize the car from `getCar()` below.
          */
+        Car car = getCar();
+       mvc.perform(delete("/cars/"+car.getId()))
+               .andExpect(status().isNoContent());
     }
 
     /**
