@@ -108,6 +108,7 @@ public class CarService implements ApplicationEventPublisherAware {
                         carToBeUpdated.setDetails(finalCar.getDetails());
                         carToBeUpdated.setLocation(finalCar.getLocation());
                         carToBeUpdated = repository.save(carToBeUpdated);
+                        carToBeUpdated.setPrice(finalCar.getPrice());
                         publisher.publishEvent(new VehicleEvent(this, CarEventsEnum.CREATED,carToBeUpdated));
                         return carToBeUpdated;
                     })

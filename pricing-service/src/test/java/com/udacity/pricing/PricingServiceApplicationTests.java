@@ -11,6 +11,7 @@ public class PricingServiceApplicationTests {
 
 	@Test
 	public void contextLoads() {
+
 	}
 
 }

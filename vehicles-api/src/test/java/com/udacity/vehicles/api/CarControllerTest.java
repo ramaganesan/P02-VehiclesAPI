@@ -8,6 +8,7 @@ import com.udacity.vehicles.domain.car.Details;
 import com.udacity.vehicles.domain.manufacturer.Manufacturer;
 import com.udacity.vehicles.domain.manufacturer.ManufacturerRepository;
 import com.udacity.vehicles.service.CarService;
+import org.junit.BeforeClass;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -24,7 +25,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -33,15 +33,12 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.hamcrest.Matchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * Implements testing of the CarController class.
@@ -91,7 +88,7 @@ public class CarControllerTest {
     /**
      * Creates pre-requisites for testing, such as an example car.
      */
-    @BeforeAll
+    @BeforeEach
     public void setup() {
         Car car = getCar();
         car.setId(1L);
@@ -108,8 +105,6 @@ public class CarControllerTest {
     @Order(1)
     public void createCar() throws Exception {
         Car car = getCar();
-        Mockito.when(carService.save(car)).thenReturn(car);
-       // Mockito.when(carResourceAssembler.toModel(car)).thenReturn(toModel(car));
         mvc.perform(
                 post(new URI("/cars"))
                         .content(json.write(car).getJson())
@@ -130,10 +125,6 @@ public class CarControllerTest {
          *   the whole list of vehicles. This should utilize the car from `getCar()`
          *   below (the vehicle will be the first in the list).
          */
-        Car car = getCar();
-        ArrayList<Car> list = new ArrayList<>();
-        list.add(car);
-        Mockito.when(carService.list()).thenReturn(list);
         mvc.perform(get("/cars"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/hal+json"))
@@ -153,11 +144,22 @@ public class CarControllerTest {
          *   a vehicle by ID. This should utilize the car from `getCar()` below.
          */
         Car car = getCar();
-        Mockito.when(carService.findById(car.getId())).thenReturn(car);
         mvc.perform(get("/cars/"+car.getId()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/hal+json"))
                 .andExpect(jsonPath("$.id",is(1)));
+    }
+
+    @Test
+    @Order(4)
+    public void updateCar() throws Exception{
+       Car car = getCar();
+        mvc.perform(
+                put(new URI("/cars/"+ car.getId()))
+                        .content(json.write(car).getJson())
+                        .contentType(MediaType.APPLICATION_JSON_UTF8)
+                        .accept(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(status().isOk());
     }
 
     /**
@@ -165,7 +167,7 @@ public class CarControllerTest {
      * @throws Exception if the delete operation of a vehicle fails
      */
     @Test
-    @Order(4)
+    @Order(5)
     public void deleteCar() throws Exception {
         /**
          * TODO: Add a test to check whether a vehicle is appropriately deleted

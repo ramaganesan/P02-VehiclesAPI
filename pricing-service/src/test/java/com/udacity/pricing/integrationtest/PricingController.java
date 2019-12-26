@@ -2,12 +2,15 @@ package com.udacity.pricing.integrationtest;
 
 import com.udacity.pricing.domain.price.Price;
 import org.aspectj.util.LangUtil;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.core.annotation.Order;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -16,7 +19,9 @@ import java.util.HashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, args={"eureka.client.enabled:false"})
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@TestPropertySource(locations = "classpath:application-test.properties")
 public class PricingController {
     @LocalServerPort
     private int port;
@@ -29,9 +34,9 @@ public class PricingController {
     private final static String basePath = "/services/price/";
 
     @Test
-    @Order(1)
+    @org.junit.jupiter.api.Order(1)
     public void getByVehicleId(){
-        Long vehicleId = 100l;
+        Long vehicleId = 1l;
         Price price = testRestTemplate.getForObject(hostWithProtocol+port+basePath+"/vehicle?vehicleId="+vehicleId.toString(),Price.class);
         assertThat(price).isNotNull();
         assertThat(price.getVehicleId()).isEqualTo(vehicleId);
@@ -42,7 +47,7 @@ public class PricingController {
     @Order(2)
     public void getPriceById(){
         Long id = 1L;
-        Long vehicleId = 100l;
+        Long vehicleId = 1l;
         Price price = testRestTemplate.getForObject(hostWithProtocol+port+basePath+id.toString(),Price.class);
         assertThat(price).isNotNull();
         assertThat(price.getVehicleId()).isEqualTo(vehicleId);
@@ -61,7 +66,7 @@ public class PricingController {
     @Test
     @Order(4)
     public void updatePrice(){
-        Long vehicleId = 100l;
+        Long vehicleId = 1l;
         Price price = testRestTemplate.getForObject(hostWithProtocol+port+basePath+"/vehicle?vehicleId="+vehicleId.toString(),Price.class);
         BigDecimal newPrice = price.getPrice().add(new BigDecimal(200000));
         price.setPrice(newPrice);
