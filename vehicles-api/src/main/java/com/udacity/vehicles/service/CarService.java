@@ -1,8 +1,18 @@
 package com.udacity.vehicles.service;
 
+import com.udacity.vehicles.client.maps.MapsClient;
+import com.udacity.vehicles.client.prices.PriceClient;
 import com.udacity.vehicles.domain.car.Car;
 import com.udacity.vehicles.domain.car.CarRepository;
 import java.util.List;
+import java.util.Optional;
+
+import com.udacity.vehicles.event.CarEventsEnum;
+import com.udacity.vehicles.event.VehicleEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.stereotype.Service;
 
 /**
@@ -11,16 +21,26 @@ import org.springframework.stereotype.Service;
  * location and price data when desired.
  */
 @Service
-public class CarService {
+public class CarService implements ApplicationEventPublisherAware {
 
     private final CarRepository repository;
 
-    public CarService(CarRepository repository) {
+    private final PriceClient priceClient;
+
+    private final MapsClient mapsClient;
+
+    private ApplicationEventPublisher publisher;
+
+    private static final Logger logger = LoggerFactory.getLogger(CarService.class);
+
+    public CarService(CarRepository repository, PriceClient priceClient, MapsClient mapsClient) {
         /**
          * TODO: Add the Maps and Pricing Web Clients you create
          *   in `VehiclesApiApplication` as arguments and set them here.
          */
         this.repository = repository;
+        this.priceClient = priceClient;
+        this.mapsClient = mapsClient;
     }
 
     /**
@@ -42,7 +62,8 @@ public class CarService {
          *   If it does not exist, throw a CarNotFoundException
          *   Remove the below code as part of your implementation.
          */
-        Car car = new Car();
+        Optional<Car> optionalCar = repository.findById(id);
+        Car car = optionalCar.orElseThrow(CarNotFoundException::new);
 
         /**
          * TODO: Use the Pricing Web client you create in `VehiclesApiApplication`
@@ -51,7 +72,11 @@ public class CarService {
          * Note: The car class file uses @transient, meaning you will need to call
          *   the pricing service each time to get the price.
          */
-
+         try{
+             car.setPrice(priceClient.getPrice(car.getId()));
+         }catch (Exception e){
+             logger.error("Error getting Price details from Pricing Service " + e.getLocalizedMessage());
+         }
 
         /**
          * TODO: Use the Maps Web client you create in `VehiclesApiApplication`
@@ -61,7 +86,11 @@ public class CarService {
          * Note: The Location class file also uses @transient for the address,
          * meaning the Maps service needs to be called each time for the address.
          */
-
+         try{
+             car.setLocation(mapsClient.getAddress(car.getLocation()));
+         }catch (Exception e){
+             logger.error("Error getting Location Information from Location Service " + e.getLocalizedMessage());
+         }
 
         return car;
     }
@@ -73,15 +102,20 @@ public class CarService {
      */
     public Car save(Car car) {
         if (car.getId() != null) {
+            Car finalCar = car;
             return repository.findById(car.getId())
                     .map(carToBeUpdated -> {
-                        carToBeUpdated.setDetails(car.getDetails());
-                        carToBeUpdated.setLocation(car.getLocation());
-                        return repository.save(carToBeUpdated);
-                    }).orElseThrow(CarNotFoundException::new);
+                        carToBeUpdated.setDetails(finalCar.getDetails());
+                        carToBeUpdated.setLocation(finalCar.getLocation());
+                        carToBeUpdated = repository.save(carToBeUpdated);
+                        publisher.publishEvent(new VehicleEvent(this, CarEventsEnum.CREATED,carToBeUpdated));
+                        return carToBeUpdated;
+                    })
+                    .orElseThrow(CarNotFoundException::new);
         }
-
-        return repository.save(car);
+        car = repository.save(car);
+        publisher.publishEvent(new VehicleEvent(this, CarEventsEnum.CREATED,car));
+        return car;
     }
 
     /**
@@ -93,12 +127,20 @@ public class CarService {
          * TODO: Find the car by ID from the `repository` if it exists.
          *   If it does not exist, throw a CarNotFoundException
          */
-
+         Optional<Car> optionalCar = repository.findById(id);
+         Car car = optionalCar.orElseThrow(CarNotFoundException::new);
 
         /**
          * TODO: Delete the car from the repository.
          */
+         repository.delete(car);
+        publisher.publishEvent(new VehicleEvent(this, CarEventsEnum.DELETED,car));
 
+    }
+
+    @Override
+    public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+        this.publisher = applicationEventPublisher;
 
     }
 }

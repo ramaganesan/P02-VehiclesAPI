@@ -1,46 +1,58 @@
 package com.udacity.vehicles.api;
 
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import com.udacity.vehicles.client.maps.MapsClient;
-import com.udacity.vehicles.client.prices.PriceClient;
 import com.udacity.vehicles.domain.Condition;
 import com.udacity.vehicles.domain.Location;
 import com.udacity.vehicles.domain.car.Car;
+import com.udacity.vehicles.domain.car.CarRepository;
 import com.udacity.vehicles.domain.car.Details;
 import com.udacity.vehicles.domain.manufacturer.Manufacturer;
+import com.udacity.vehicles.domain.manufacturer.ManufacturerRepository;
 import com.udacity.vehicles.service.CarService;
-import java.net.URI;
-import java.util.Collections;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.json.AutoConfigureJsonTesters;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.json.JacksonTester;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
+import org.springframework.context.annotation.Bean;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNotNull;
+import static org.mockito.BDDMockito.given;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.hamcrest.Matchers.*;
 
 /**
  * Implements testing of the CarController class.
  */
-@RunWith(SpringRunner.class)
-@SpringBootTest
+@ExtendWith(SpringExtension.class)
+@WebMvcTest
 @AutoConfigureMockMvc
 @AutoConfigureJsonTesters
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class CarControllerTest {
 
     @Autowired
@@ -53,15 +65,34 @@ public class CarControllerTest {
     private CarService carService;
 
     @MockBean
-    private PriceClient priceClient;
+    @Qualifier("pricing")
+    private WebClient pricing;
 
     @MockBean
-    private MapsClient mapsClient;
+    @Qualifier("maps")
+    private WebClient maps;
+
+    @MockBean
+    private LoadBalancerClient loadBalancerClient;
+
+    @MockBean
+    private ManufacturerRepository manufacturerRepository;
+
+    @MockBean
+    private CarRepository carRepository;
+
+    @TestConfiguration
+    static class CarControllerTestConfig{
+        @Bean
+        public CarResourceAssembler createCarResourceAssembler(){
+            return new CarResourceAssembler();
+        }
+    }
 
     /**
      * Creates pre-requisites for testing, such as an example car.
      */
-    @Before
+    @BeforeAll
     public void setup() {
         Car car = getCar();
         car.setId(1L);
@@ -77,6 +108,8 @@ public class CarControllerTest {
     @Test
     public void createCar() throws Exception {
         Car car = getCar();
+        Mockito.when(carService.save(car)).thenReturn(car);
+       // Mockito.when(carResourceAssembler.toModel(car)).thenReturn(toModel(car));
         mvc.perform(
                 post(new URI("/cars"))
                         .content(json.write(car).getJson())
@@ -96,6 +129,14 @@ public class CarControllerTest {
          *   the whole list of vehicles. This should utilize the car from `getCar()`
          *   below (the vehicle will be the first in the list).
          */
+        Car car = getCar();
+        ArrayList<Car> list = new ArrayList<>();
+        list.add(car);
+        Mockito.when(carService.list()).thenReturn(list);
+        mvc.perform(get("/cars"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/hal+json"))
+                .andExpect(jsonPath("$._embedded.carList[0].id", is(1)));
 
     }
 
@@ -103,7 +144,7 @@ public class CarControllerTest {
      * Tests the read operation for a single car by ID.
      * @throws Exception if the read operation for a single car fails
      */
-    @Test
+   // @Test
     public void findCar() throws Exception {
         /**
          * TODO: Add a test to check that the `get` method works by calling
@@ -115,7 +156,7 @@ public class CarControllerTest {
      * Tests the deletion of a single car by ID.
      * @throws Exception if the delete operation of a vehicle fails
      */
-    @Test
+    //@Test
     public void deleteCar() throws Exception {
         /**
          * TODO: Add a test to check whether a vehicle is appropriately deleted
@@ -130,6 +171,7 @@ public class CarControllerTest {
      */
     private Car getCar() {
         Car car = new Car();
+        car.setId(1l);
         car.setLocation(new Location(40.730610, -73.935242));
         Details details = new Details();
         Manufacturer manufacturer = new Manufacturer(101, "Chevrolet");
@@ -146,5 +188,12 @@ public class CarControllerTest {
         car.setDetails(details);
         car.setCondition(Condition.USED);
         return car;
+    }
+
+    private EntityModel<Car> toModel(Car entity) {
+        return new EntityModel<Car>(entity,
+                WebMvcLinkBuilder.linkTo(methodOn(CarController.class).get(entity.getId())).withSelfRel(),
+                WebMvcLinkBuilder.linkTo(methodOn(CarController.class).list()).withRel("cars")
+        );
     }
 }

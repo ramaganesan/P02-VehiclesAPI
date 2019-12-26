@@ -6,6 +6,7 @@ import com.udacity.pricing.service.PriceNotFoundException;
 import com.udacity.pricing.service.PricingMockService;
 import com.udacity.pricing.service.PricingService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,6 +30,7 @@ public class PricingController {
     public Price getByVehicleId(@RequestParam Long vehicleId) {
         try {
             return pricingService.findPriceByVehicleId(vehicleId);
+            //throw new RuntimeException("No price");
         } catch (PriceNotFoundException ex) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND, "Price Not Found for vehicleId: " + vehicleId, ex);
@@ -37,6 +39,29 @@ public class PricingController {
                     HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error in finding Price for vehicleId: " + vehicleId, ex);
         }
 
+    }
+
+    @PostMapping("/vehicle")
+    public Price savePriceByVehicleId(@RequestBody Price price){
+        try{
+            return pricingService.savePriceByVehicleId(price);
+        }catch (Exception e){
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error in saving Price for vehicleId: " + price.getVehicleId(), e);
+        }
+    }
+
+    @DeleteMapping("/vehicle")
+    public void deletePriceByVehicleId(@RequestParam Long vehicleId){
+        try {
+            pricingService.deletePriceById(vehicleId);
+        }catch (PriceNotFoundException ex) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Unable to delete Price for vehicleId: " + vehicleId, ex);
+        } catch (Exception ex){
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error in deleting Price for vehicleId: " + vehicleId, ex);
+        }
     }
 
     @GetMapping("/{id}")
@@ -68,7 +93,8 @@ public class PricingController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updatePrice(@RequestBody Price price, @PathVariable Long id){
         try{
-            pricingService.updatePriceByVehicleId(price);
+             pricingService.updatePriceByVehicleId(price);
+            //throw new PriceNotFoundException("No price");
         }catch (PriceNotFoundException ex) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND, "Unable to update Price as Price is Not Found for id: " + id, ex);

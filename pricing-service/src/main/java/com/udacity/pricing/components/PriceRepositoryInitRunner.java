@@ -22,8 +22,8 @@ public class PriceRepositoryInitRunner implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         log.info("Init Price Repository");
-        priceRepository.save(PriceEntity.builder().currency("USD").price(new BigDecimal(100000)).vehicleId(100L).build());
-        priceRepository.save(PriceEntity.builder().currency("USD").price(new BigDecimal(200000)).vehicleId(200L).build());
-        priceRepository.save(PriceEntity.builder().currency("USD").price(new BigDecimal(300000)).vehicleId(300L).build());
+        priceRepository.save(PriceEntity.builder().currency("USD").price(new BigDecimal(100000)).vehicleId(1L).build());
+        priceRepository.save(PriceEntity.builder().currency("USD").price(new BigDecimal(200000)).vehicleId(2L).build());
+        priceRepository.save(PriceEntity.builder().currency("USD").price(new BigDecimal(300000)).vehicleId(3L).build());
     }
 }

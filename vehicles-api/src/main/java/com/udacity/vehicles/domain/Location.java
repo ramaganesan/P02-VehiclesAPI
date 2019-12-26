@@ -3,6 +3,7 @@ package com.udacity.vehicles.domain;
 import javax.persistence.Embeddable;
 import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 
 /**
  * Stores information about a given location.
@@ -11,8 +12,10 @@ import javax.validation.constraints.NotNull;
  * the maps API.
  */
 @Embeddable
-public class Location {
+public class Location implements Serializable{
 
+
+    private static final long serialVersionUID = 6493332913136326964L;
     @NotNull
     private Double lat;
 

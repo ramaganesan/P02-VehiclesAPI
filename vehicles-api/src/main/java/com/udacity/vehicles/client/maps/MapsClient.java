@@ -5,6 +5,7 @@ import java.util.Objects;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -31,7 +32,9 @@ public class MapsClient {
      * @return An updated location including street, city, state and zip,
      *   or an exception message noting the Maps service is down
      */
+    @Cacheable(value = "address-service-cache", key = "#location.lat+'-'+#location.lon", unless = "#result.address == null")
     public Location getAddress(Location location) {
+        log.info("Cache Missing Calling Address Service");
         try {
             Address address = client
                     .get()
