@@ -128,6 +128,6 @@ public class PriceClient implements ApplicationListener<VehicleEvent> {
 
     @CacheEvict(cacheNames = "pricing-service-cache", key = "#vehicleId")
     public void pricingCacheClear(Long vehicleId){
-        log.info("Cleared  Price cache");
+        log.info("Cleared  Price cache for vehicle id: " + vehicleId);
     }
 }
