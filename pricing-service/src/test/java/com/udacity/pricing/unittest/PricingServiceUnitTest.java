@@ -80,7 +80,7 @@ public class PricingServiceUnitTest {
         Price price = new Price("USD",new BigDecimal(30000),  200L);
         PriceEntity priceEntity = PriceEntity.builder().price(new BigDecimal(30000)).id(1l).vehicleId(200L).currency("USD").build();
         Mockito.when(priceRepository.findPriceEntityByVehicleId(200L)).thenReturn(java.util.Optional.ofNullable(priceEntity));
-        pricingService.deletePriceByVehicleId(price);
+        pricingService.deletePriceByVehicleId(price.getVehicleId());
         ArgumentCaptor<Long> priceEntityArgumentCaptor = ArgumentCaptor.forClass(Long.class);
         Mockito.verify(priceRepository,Mockito.times(1)).deleteByVehicleId(priceEntityArgumentCaptor.capture());
         Long priceEntityId = priceEntityArgumentCaptor.getValue();

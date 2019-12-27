@@ -100,7 +100,7 @@ public class PriceClient  {
 
     public void deletePrice(Long id){
         client.delete()
-                .uri(uriBuilder -> uriBuilder.path("services/price/vehicle/")
+                .uri(uriBuilder -> uriBuilder.path("services/price/vehicle")
                         .queryParam("vehicleId", id)
                         .build())
                 .retrieve()

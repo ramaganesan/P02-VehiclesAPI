@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
 import java.util.Objects;
 import java.util.Optional;
@@ -57,8 +58,9 @@ public class PricingService {
         repository.save(priceEntity);
     }
 
-    public void deletePriceByVehicleId(Price price){
-        Optional<PriceEntity> priceEntity = repository.findPriceEntityByVehicleId(price.getVehicleId());
+    @Transactional
+    public void deletePriceByVehicleId(Long vehicleId){
+        Optional<PriceEntity> priceEntity = repository.findPriceEntityByVehicleId(vehicleId);
         PriceEntity entity =priceEntity.orElseThrow(PriceNotFoundException::new);
         repository.deleteByVehicleId(entity.getVehicleId());
     }

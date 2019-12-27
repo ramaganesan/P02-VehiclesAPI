@@ -54,7 +54,7 @@ public class PricingController {
     @DeleteMapping("/vehicle")
     public void deletePriceByVehicleId(@RequestParam Long vehicleId){
         try {
-            pricingService.deletePriceById(vehicleId);
+            pricingService.deletePriceByVehicleId(vehicleId);
         }catch (PriceNotFoundException ex) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND, "Unable to delete Price for vehicleId: " + vehicleId, ex);
