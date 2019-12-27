@@ -65,7 +65,35 @@ Swagger UI: http://localhost:8080/swagger-ui.html
    "location":{
       "lat":40.73061,
       "lon":-73.935242
-   }
+   },
+   "price": "10000"
+}
+```
+
+`POST` `/cars`
+```json
+{
+  "condition": "NEW",
+  "details": {
+    "body": "Coupe",
+    "model": "A3",
+    "manufacturer": {
+      "code": 100,
+      "name": "Audi"
+    },
+    "numberOfDoors": 4,
+    "fuelType": "Gasoline",
+    "engine": "V8",
+    "mileage": 220,
+    "modelYear": 2019,
+    "productionYear": 2016,
+    "externalColor": "White"
+  },
+  "location": {
+    "lat": 10,
+    "lon": 20
+  },
+  "price": "10000"
 }
 ```
 
@@ -102,7 +130,8 @@ the Vehicle information to be presented
    "location":{
       "lat":40.73061,
       "lon":-73.935242
-   }
+   },
+   "price": "20000"
 }
 ```
 
