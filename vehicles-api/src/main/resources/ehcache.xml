@@ -10,7 +10,9 @@
     <cache-template name="default">
         <expiry>
             <ttl unit="seconds">300</ttl>
+
         </expiry>
+
         <listeners>
             <listener>
                 <class>com.udacity.vehicles.configuration.CacheLogger</class>

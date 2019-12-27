@@ -1,23 +1,16 @@
 package com.udacity.vehicles.client.prices;
 
-import com.udacity.vehicles.event.CarEventsEnum;
-import com.udacity.vehicles.event.VehicleEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.ApplicationListener;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.retry.Retry;
 import reactor.retry.RetryContext;
 
-import javax.xml.ws.http.HTTPException;
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.function.Predicate;
 
@@ -25,7 +18,7 @@ import java.util.function.Predicate;
  * Implements a class to interface with the Pricing Client for price data.
  */
 @Component
-public class PriceClient implements ApplicationListener<VehicleEvent> {
+public class PriceClient  {
 
     private static final Logger log = LoggerFactory.getLogger(PriceClient.class);
 
@@ -90,44 +83,31 @@ public class PriceClient implements ApplicationListener<VehicleEvent> {
         };
     }
 
-    @Override
-    public void onApplicationEvent(VehicleEvent vehicleEvent) {
-        VehicleEvent event = (VehicleEvent) vehicleEvent;
-        if(event.getEventType().equals(CarEventsEnum.CREATED) || event.getEventType().equals(CarEventsEnum.UPDATED)){
-            log.info("Cars update or created event published. Updating Price with this data");
-            Price price = new Price();
-            price.setCurrency("USD");
-            price.setPrice(new BigDecimal(vehicleEvent.getCar().getPrice()));
-            price.setVehicleId(vehicleEvent.getCar().getId());
-            Price returnPrice = client
-                          .post()
-                          .uri(uriBuilder -> uriBuilder
-                                  .path("services/price/vehicle")
-                                  .build())
-                          .body(Mono.just(price),Price.class)
-                          .retrieve()
-                          .bodyToMono(Price.class)
-                          .retryWhen(retryPrice)
-                          .block();
-            log.info("Successfully updated Pricing service " + returnPrice.getVehicleId());
-
-        }else{
-            log.info("Cars delete event published. Deleting Price");
-            client.delete()
-                    .uri(uriBuilder -> uriBuilder.path("services/price/vehicle/")
-                            .queryParam("vehicleId", vehicleEvent.getCar().getId())
-                         .build())
-                    .retrieve()
-                    .toBodilessEntity()
-                    .retryWhen(retryPrice)
-                    .block();
-            log.info("Successfully deleted Price");
-        }
-        pricingCacheClear(vehicleEvent.getCar().getId());
+    public Price createOrUpdatePrice(Price price){
+        Price returnPrice = client
+                .post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("services/price/vehicle")
+                        .build())
+                .body(Mono.just(price),Price.class)
+                .retrieve()
+                .bodyToMono(Price.class)
+                .retryWhen(retryPrice)
+                .block();
+        log.info("Successfully updated Pricing service " + returnPrice.getVehicleId());
+        return returnPrice;
     }
 
-    @CacheEvict(cacheNames = "pricing-service-cache", key = "#vehicleId")
-    public void pricingCacheClear(Long vehicleId){
-        log.info("Cleared  Price cache for vehicle id: " + vehicleId);
+    public void deletePrice(Long id){
+        client.delete()
+                .uri(uriBuilder -> uriBuilder.path("services/price/vehicle/")
+                        .queryParam("vehicleId", id)
+                        .build())
+                .retrieve()
+                .toBodilessEntity()
+                .retryWhen(retryPrice)
+                .block();
+        log.info("Successfully deleted Price");
     }
+
 }

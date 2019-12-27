@@ -47,6 +47,7 @@ public class Car {
     private Location location = new Location(0d, 0d);
 
     @Transient
+   // @NotNull
     private String price;
 
     public Long getId() {

@@ -51,6 +51,7 @@ public class CarRepositoryInitRunner implements CommandLineRunner {
         car.setDetails(getDetails());
         Location location = new Location(new Double(10), new Double(10));
         car.setLocation(location);
+        car.setPrice("10000");
         return car;
     }
 }
