@@ -97,6 +97,8 @@ public class CarService implements ApplicationEventPublisherAware {
 
     /**
      * Either creates or updates a vehicle, based on prior existence of car
+     * This call will also publish a Vehicle Created or Update Event
+     * This event will be processed by @see VehicleEventProcessor
      * @param car A car object, which can be either new or existing
      * @return the new/updated car is stored in the repository
      */
@@ -109,7 +111,7 @@ public class CarService implements ApplicationEventPublisherAware {
                         carToBeUpdated.setLocation(finalCar.getLocation());
                         carToBeUpdated = repository.save(carToBeUpdated);
                         carToBeUpdated.setPrice(finalCar.getPrice());
-                        publisher.publishEvent(new VehicleEvent(this, CarEventsEnum.CREATED,carToBeUpdated));
+                        publisher.publishEvent(new VehicleEvent(this, CarEventsEnum.UPDATED,carToBeUpdated));
                         return carToBeUpdated;
                     })
                     .orElseThrow(CarNotFoundException::new);
@@ -121,6 +123,8 @@ public class CarService implements ApplicationEventPublisherAware {
 
     /**
      * Deletes a given car by ID
+     * This call will also publish a Vehicle Deleted Event
+     * This event will be processed by @see VehicleEventProcessor
      * @param id the ID number of the car to delete
      */
     public void delete(Long id) {

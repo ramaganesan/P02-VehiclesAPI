@@ -12,6 +12,11 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 @Component
+/**
+ * This class will process Vehicle Events Created
+ * Based on the event type, it will create, update or delete price for a Vehicle
+ * in Pricing API
+ */
 public class VehicleEventProcessor implements ApplicationListener<VehicleEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(VehicleEventProcessor.class);
@@ -25,6 +30,11 @@ public class VehicleEventProcessor implements ApplicationListener<VehicleEvent> 
         this.priceClient = priceClient;
         this.cacheManager = cacheManager;
     }
+
+    /**
+     * Update price for the Vehicle in Pricing Service
+     * @param vehicleEvent
+     */
     @Override
     public void onApplicationEvent(VehicleEvent vehicleEvent) {
         VehicleEvent event = (VehicleEvent) vehicleEvent;
@@ -52,6 +62,10 @@ public class VehicleEventProcessor implements ApplicationListener<VehicleEvent> 
     }
 
    // @CacheEvict(cacheNames ="pricing-service-cache")
+    /**
+    * This method evicts Pricing Service Cache
+    * @param vehicleId
+     **/
     public void pricingCacheClear(Long vehicleId){
         cacheManager.getCache("pricing-service-cache").evictIfPresent(vehicleId);
         log.info("Cleared  Price cache for vehicle id: " + vehicleId);
